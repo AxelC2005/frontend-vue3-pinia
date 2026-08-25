@@ -1,10 +1,10 @@
-# 🚀 Prueba Técnica Frontend - Vue 3 SPA
+# Prueba Técnica Frontend - Vue 3 SPA
 
 Aplicación de Single Page Application (SPA) desarrollada para la evaluación técnica full stack, enfocada en un frontend robusto con **Vue 3 (Composition API)**, **Pinia**, **Vue Router** y **Tailwind CSS**.
 
 ---
 
-## 📋 Tabla de Contenido
+## Tabla de Contenido
 1. [Requisitos](#requisitos)
 2. [Instalación](#instalación)
 3. [Docker](#docker)
