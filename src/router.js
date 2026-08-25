@@ -1,35 +1,36 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import Login from './views/Login.vue'
-import Dashboard from './views/Dashboard.vue'
-import Products from './views/Products.vue'
-import ProductForm from './views/ProductForm.vue'
-import Categories from './views/Categories.vue'
-import StockMovements from './views/StockMovements.vue'
+import { createRouter, createWebHistory } from 'vue-router';
 
-Vue.use(Router)
+const Login = () => import('./views/Login.vue');
+const Dashboard = () => import('./views/Dashboard.vue');
+const Products = () => import('./views/Products.vue');
 
-const router = new Router({
-  mode: 'history',
-  routes: [
+const routes = [
     { path: '/', redirect: '/dashboard' },
-    { path: '/login', component: Login },
-    { path: '/dashboard', component: Dashboard },
-    { path: '/products', component: Products },
-    { path: '/products/new', component: ProductForm },
-    { path: '/products/:id/edit', component: ProductForm },
-    { path: '/products/:id/stock', component: StockMovements },
-    { path: '/categories', component: Categories },
-  ]
-})
+    { 
+        path: '/login', 
+        name: 'Login', 
+        component: Login, 
+        meta: { isPublic: true } 
+    },
+    { path: '/dashboard', name: 'Dashboard', component: Dashboard },
+    { path: '/products', name: 'Products', component: Products }
+];
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes
+});
 
 router.beforeEach((to, from, next) => {
-  // Legacy issue: simplistic route guard.
-  if (to.path !== '/login' && !localStorage.getItem('token')) {
-    next('/login')
-  } else {
-    next()
-  }
-})
+    const token = localStorage.getItem('auth_token');
 
-export default router
+    if (!to.meta.isPublic && !token) {
+        next('/login');
+    } else if (to.meta.isPublic && token) {
+        next('/dashboard');
+    } else {
+        next();
+    }
+});
+
+export default router;
