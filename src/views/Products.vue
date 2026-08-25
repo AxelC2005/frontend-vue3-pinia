@@ -2,17 +2,19 @@
   <div class="p-6">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800">Gestión de Productos</h1>
-      <BaseButton @click="modoCrear = !modoCrear">
-        {{ modoCrear ? 'Cancelar' : 'Nuevo Producto' }}
+      <BaseButton @click="abrirModalCrear">
+        {{ modoEdicion ? 'Cancelar' : 'Nuevo Producto' }}
       </BaseButton>
     </div>
 
-    <div v-if="modoCrear" class="p-4 mb-6 bg-gray-50 border rounded shadow-sm">
+    <div v-if="modoEdicion || form.id" class="p-4 mb-6 bg-gray-50 border rounded shadow-sm">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
         <input v-model="form.name" type="text" placeholder="Nombre" class="p-2 border rounded" />
         <input v-model.number="form.price" type="number" placeholder="Precio" class="p-2 border rounded" />
         <input v-model.number="form.stock" type="number" placeholder="Stock" class="p-2 border rounded" />
-        <BaseButton @click="guardar" :deshabilitado="!form.name || form.price <= 0">Guardar</BaseButton>
+        <BaseButton @click="guardar" :deshabilitado="!form.name || form.price <= 0">
+          {{ form.id ? 'Actualizar' : 'Guardar' }}
+        </BaseButton>
       </div>
     </div>
 
@@ -46,6 +48,7 @@
             </span>
           </td>
           <td class="flex justify-center gap-2 p-3">
+            <BaseButton tipo="primario" @click="cargarEdicion(producto)">Editar</BaseButton>
             <BaseButton tipo="peligro" @click="borrar(producto.id)">Eliminar</BaseButton>
           </td>
         </tr>
@@ -79,9 +82,10 @@ import { ref, reactive, onMounted } from 'vue';
 import { useProductStore } from '../stores/products';
 
 const productStore = useProductStore();
-const modoCrear = ref(false);
+const modoEdicion = ref(false);
 
 const form = reactive({
+    id: null,
     name: '',
     price: 0,
     stock: 0
@@ -91,12 +95,33 @@ onMounted(() => {
     productStore.obtenerProductos();
 });
 
-const guardar = () => {
-    productStore.agregarProducto({ ...form });
+const abrirModalCrear = () => {
+    modoEdicion.value = !modoEdicion.value;
+    form.id = null;
     form.name = '';
     form.price = 0;
     form.stock = 0;
-    modoCrear.value = false;
+};
+
+const cargarEdicion = (prod) => {
+    modoEdicion.value = true;
+    form.id = prod.id;
+    form.name = prod.name;
+    form.price = prod.price;
+    form.stock = prod.stock;
+};
+
+const guardar = () => {
+    if (form.id) {
+        productStore.actualizarProducto(form.id, { name: form.name, price: form.price, stock: form.stock });
+    } else {
+        productStore.agregarProducto({ ...form });
+    }
+    form.id = null;
+    form.name = '';
+    form.price = 0;
+    form.stock = 0;
+    modoEdicion.value = false;
 };
 
 const borrar = (id) => {

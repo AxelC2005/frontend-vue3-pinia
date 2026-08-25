@@ -3,6 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 const Login = () => import('./views/Login.vue');
 const Dashboard = () => import('./views/Dashboard.vue');
 const Products = () => import('./views/Products.vue');
+const Categories = () => import('./views/Categories.vue');
+const Stock = () => import('./views/StockMovements.vue');
 
 const routes = [
     { path: '/', redirect: '/dashboard' },
@@ -13,7 +15,9 @@ const routes = [
         meta: { isPublic: true } 
     },
     { path: '/dashboard', name: 'Dashboard', component: Dashboard },
-    { path: '/products', name: 'Products', component: Products }
+    { path: '/products', name: 'Products', component: Products },
+    { path: '/categories', name: 'Categories', component: Categories },
+    { path: '/stock', name: 'Stock', component: Stock }
 ];
 
 const router = createRouter({

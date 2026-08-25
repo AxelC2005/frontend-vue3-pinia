@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 import { ref, reactive, computed } from 'vue';
+import { useStockStore } from './stock';
 
 export const useProductStore = defineStore('products', () => {
+    const stockStore = useStockStore();
+
     const productos = ref([
         { id: 1, name: 'Laptop Pro', price: 3500.00, stock: 15 },
         { id: 2, name: 'Teclado Mecánico', price: 250.00, stock: 8 },
         { id: 3, name: 'Taladro Percutor', price: 450.00, stock: 5 },
-        { id: 4, name: 'Silla Ergonómica', price: 700.00, stock: 3 },
-        { id: 5, name: 'Monitor 24"', price: 800.00, stock: 12 },
-        { id: 6, name: 'Mouse Inalámbrico', price: 90.00, stock: 25 }
+        { id: 4, name: 'Silla Ergonómica', price: 700.00, stock: 3 }
     ]);
 
     const cargando = ref(false);
@@ -47,9 +48,32 @@ export const useProductStore = defineStore('products', () => {
     const agregarProducto = (nuevoProducto) => {
         const nuevoId = productos.value.length ? Math.max(...productos.value.map(p => p.id)) + 1 : 1;
         productos.value.push({ id: nuevoId, ...nuevoProducto });
+        stockStore.registrarMovimientoAutomatico(nuevoProducto.name, 'ENTRADA', Number(nuevoProducto.stock));
+    };
+
+    const actualizarProducto = (id, datosActualizados) => {
+        const index = productos.value.findIndex(p => p.id === id);
+        if (index !== -1) {
+            const stockAnterior = Number(productos.value[index].stock);
+            const stockNuevo = Number(datosActualizados.stock);
+
+            productos.value[index] = { id, ...datosActualizados };
+
+            const diferenciaStock = stockNuevo - stockAnterior;
+            
+            if (diferenciaStock !== 0) {
+                const tipo = diferenciaStock > 0 ? 'ENTRADA' : 'SALIDA';
+                stockStore.registrarMovimientoAutomatico(datosActualizados.name, tipo, Math.abs(diferenciaStock));
+            }
+        }
     };
 
     const eliminarProducto = (id) => {
+        const productoAEliminar = productos.value.find(p => p.id === id);
+        if (productoAEliminar) {
+            stockStore.registrarMovimientoAutomatico(productoAEliminar.name, 'SALIDA', Number(productoAEliminar.stock));
+        }
+
         productos.value = productos.value.filter(p => p.id !== id);
         if (paginacion.paginaActual > totalPaginas.value) {
             paginacion.paginaActual = totalPaginas.value;
@@ -70,6 +94,7 @@ export const useProductStore = defineStore('products', () => {
         productosPaginados,
         obtenerProductos, 
         agregarProducto, 
+        actualizarProducto,
         eliminarProducto,
         cambiarPagina
     };

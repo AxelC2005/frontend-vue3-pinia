@@ -12,7 +12,7 @@ export const useCategoryStore = defineStore('categories', () => {
 
     const obtenerCategorias = async () => {
         cargando.value = true;
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 150));
         cargando.value = false;
     };
 
@@ -24,7 +24,7 @@ export const useCategoryStore = defineStore('categories', () => {
     const actualizarCategoria = (id, datosActualizados) => {
         const index = categorias.value.findIndex(c => c.id === id);
         if (index !== -1) {
-            categorias.value[index] = { ...categorias.value[index], ...datosActualizados };
+            categorias.value[index] = { id, ...datosActualizados };
         }
     };
 
