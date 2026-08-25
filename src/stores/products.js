@@ -41,7 +41,7 @@ export const useProductStore = defineStore('products', () => {
 
     const obtenerProductos = async () => {
         cargando.value = true;
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
         cargando.value = false;
     };
 
@@ -60,7 +60,6 @@ export const useProductStore = defineStore('products', () => {
             productos.value[index] = { id, ...datosActualizados };
 
             const diferenciaStock = stockNuevo - stockAnterior;
-            
             if (diferenciaStock !== 0) {
                 const tipo = diferenciaStock > 0 ? 'ENTRADA' : 'SALIDA';
                 stockStore.registrarMovimientoAutomatico(datosActualizados.name, tipo, Math.abs(diferenciaStock));
@@ -87,6 +86,7 @@ export const useProductStore = defineStore('products', () => {
     };
 
     return { 
+        productos,
         cargando, 
         paginacion, 
         filtros, 
