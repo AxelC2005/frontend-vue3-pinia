@@ -1,37 +1,34 @@
 <template>
   <div class="p-6">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold">Gestión de Productos</h1>
-      
-      <BaseButton @click="abrirModalCrear">Nuevo Producto</BaseButton>
+      <h1 class="text-2xl font-bold text-gray-800">Gestión de Productos</h1>
+      <BaseButton @click="modoCrear = !modoCrear">
+        {{ modoCrear ? 'Cancelar' : 'Nuevo Producto' }}
+      </BaseButton>
+    </div>
+
+    <div v-if="modoCrear" class="p-4 mb-6 bg-gray-50 border rounded shadow-sm">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <input v-model="form.name" type="text" placeholder="Nombre" class="p-2 border rounded" />
+        <input v-model.number="form.price" type="number" placeholder="Precio" class="p-2 border rounded" />
+        <input v-model.number="form.stock" type="number" placeholder="Stock" class="p-2 border rounded" />
+        <BaseButton @click="guardar" :deshabilitado="!form.name || form.price <= 0">Guardar</BaseButton>
+      </div>
     </div>
 
     <div class="flex gap-4 mb-6">
       <input 
         v-model="productStore.filtros.busqueda"
-        @input="buscarConRetraso"
         type="text" 
         placeholder="Buscar producto..." 
         class="p-2 border rounded w-1/3"
       />
-      
-      <select v-model="productStore.filtros.ordenar_por" @change="productStore.obtenerProductos" class="p-2 border rounded">
-        <option value="created_at">Últimos agregados</option>
-        <option value="price">Por Precio</option>
-        <option value="stock">Por Stock</option>
-      </select>
     </div>
 
-    <div v-if="productStore.cargando" class="py-10 text-center text-blue-600">
-      Cargando catálogo...
-    </div>
+    <BaseLoading :mostrar="productStore.cargando" />
 
-    <div v-else-if="productStore.errorGlobal" class="p-4 text-red-700 bg-red-100 rounded">
-      {{ productStore.errorGlobal }}
-    </div>
-
-    <table v-else class="w-full bg-white rounded shadow-md">
-      <thead class="bg-gray-200">
+    <table v-if="!productStore.cargando" class="w-full bg-white rounded shadow-md overflow-hidden">
+      <thead class="bg-gray-800 text-white">
         <tr>
           <th class="p-3 text-left">Nombre</th>
           <th class="p-3 text-left">Precio</th>
@@ -40,8 +37,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="producto in productStore.productos" :key="producto.id" class="border-b">
-          <td class="p-3">{{ producto.name }}</td>
+        <tr v-for="producto in productStore.productosPaginados" :key="producto.id" class="border-b hover:bg-gray-50">
+          <td class="p-3 font-semibold">{{ producto.name }}</td>
           <td class="p-3">S/ {{ producto.price }}</td>
           <td class="p-3">
             <span :class="producto.stock < 10 ? 'text-red-500 font-bold' : 'text-green-600'">
@@ -49,14 +46,13 @@
             </span>
           </td>
           <td class="flex justify-center gap-2 p-3">
-            <BaseButton tipo="primario" @click="editar(producto.id)">Editar</BaseButton>
-            <BaseButton tipo="peligro" @click="eliminar(producto.id)">Eliminar</BaseButton>
+            <BaseButton tipo="peligro" @click="borrar(producto.id)">Eliminar</BaseButton>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <div class="flex items-center justify-between mt-4" v-if="productStore.paginacion.totalPaginas > 1">
+    <div class="flex items-center justify-between mt-4" v-if="productStore.totalPaginas > 1">
       <BaseButton 
         :deshabilitado="productStore.paginacion.paginaActual === 1"
         @click="productStore.cambiarPagina(productStore.paginacion.paginaActual - 1)"
@@ -64,12 +60,12 @@
         Anterior
       </BaseButton>
       
-      <span class="font-bold">
-        Página {{ productStore.paginacion.paginaActual }} de {{ productStore.paginacion.totalPaginas }}
+      <span class="font-bold text-gray-700">
+        Página {{ productStore.paginacion.paginaActual }} de {{ productStore.totalPaginas }}
       </span>
 
       <BaseButton 
-        :deshabilitado="productStore.paginacion.paginaActual === productStore.paginacion.totalPaginas"
+        :deshabilitado="productStore.paginacion.paginaActual === productStore.totalPaginas"
         @click="productStore.cambiarPagina(productStore.paginacion.paginaActual + 1)"
       >
         Siguiente
@@ -79,34 +75,33 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useProductStore } from '../stores/products';
 
 const productStore = useProductStore();
+const modoCrear = ref(false);
+
+const form = reactive({
+    name: '',
+    price: 0,
+    stock: 0
+});
 
 onMounted(() => {
     productStore.obtenerProductos();
 });
 
-let timeoutBusqueda;
-const buscarConRetraso = () => {
-    clearTimeout(timeoutBusqueda);
-    timeoutBusqueda = setTimeout(() => {
-        productStore.obtenerProductos();
-    }, 500);
+const guardar = () => {
+    productStore.agregarProducto({ ...form });
+    form.name = '';
+    form.price = 0;
+    form.stock = 0;
+    modoCrear.value = false;
 };
 
-const abrirModalCrear = () => {
-    console.log("Abrir formulario de creación");
-};
-
-const editar = (id) => {
-    console.log("Editar producto", id);
-};
-
-const eliminar = (id) => {
+const borrar = (id) => {
     if(confirm("¿Estás seguro de eliminar este producto?")) {
-        console.log("Disparar action de eliminar en Pinia para el ID:", id);
+        productStore.eliminarProducto(id);
     }
 };
 </script>

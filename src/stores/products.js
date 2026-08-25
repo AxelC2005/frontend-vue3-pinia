@@ -1,88 +1,76 @@
-import { defineStore } from 'pinia'
-import { ref, reactive } from 'vue'
-import api from '../api'
+import { defineStore } from 'pinia';
+import { ref, reactive, computed } from 'vue';
 
 export const useProductStore = defineStore('products', () => {
-  const productos = ref([])
-  const cargando = ref(false)
-  const errorGlobal = ref('')
+    const productos = ref([
+        { id: 1, name: 'Laptop Pro', price: 3500.00, stock: 15 },
+        { id: 2, name: 'Teclado Mecánico', price: 250.00, stock: 8 },
+        { id: 3, name: 'Taladro Percutor', price: 450.00, stock: 5 },
+        { id: 4, name: 'Silla Ergonómica', price: 700.00, stock: 3 },
+        { id: 5, name: 'Monitor 24"', price: 800.00, stock: 12 },
+        { id: 6, name: 'Mouse Inalámbrico', price: 90.00, stock: 25 }
+    ]);
 
-  const filtros = reactive({
-    busqueda: '',
-    ordenar_por: 'created_at'
-  })
+    const cargando = ref(false);
+    const itemsPorPagina = 4;
 
-  const paginacion = reactive({
-    paginaActual: 1,
-    porPagina: 10,
-    totalPaginas: 1,
-    totalRegistros: 0
-  })
+    const paginacion = reactive({
+        paginaActual: 1
+    });
 
-  const aplicarPaginacion = items => {
-    paginacion.totalRegistros = items.length
-    paginacion.totalPaginas = Math.max(1, Math.ceil(items.length / paginacion.porPagina))
-    if (paginacion.paginaActual > paginacion.totalPaginas) {
-      paginacion.paginaActual = paginacion.totalPaginas
-    }
+    const filtros = reactive({
+        busqueda: ''
+    });
 
-    const inicio = (paginacion.paginaActual - 1) * paginacion.porPagina
-    const fin = inicio + paginacion.porPagina
-    productos.value = items.slice(inicio, fin)
-  }
+    const productosFiltrados = computed(() => {
+        return productos.value.filter(p => 
+            p.name.toLowerCase().includes(filtros.busqueda.toLowerCase())
+        );
+    });
 
-  const ordenar = items => {
-    const list = [...items]
-    if (filtros.ordenar_por === 'price') {
-      list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0))
-    } else if (filtros.ordenar_por === 'stock') {
-      list.sort((a, b) => Number(a.stock || 0) - Number(b.stock || 0))
-    } else {
-      list.sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
-    }
-    return list
-  }
+    const totalPaginas = computed(() => {
+        return Math.ceil(productosFiltrados.value.length / itemsPorPagina) || 1;
+    });
 
-  const obtenerProductos = async () => {
-    cargando.value = true
-    errorGlobal.value = ''
+    const productosPaginados = computed(() => {
+        const inicio = (paginacion.paginaActual - 1) * itemsPorPagina;
+        const fin = inicio + itemsPorPagina;
+        return productosFiltrados.value.slice(inicio, fin);
+    });
 
-    try {
-      const response = await api.get('/products', {
-        params: {
-          q: filtros.busqueda
+    const obtenerProductos = async () => {
+        cargando.value = true;
+        await new Promise(resolve => setTimeout(resolve, 200));
+        cargando.value = false;
+    };
+
+    const agregarProducto = (nuevoProducto) => {
+        const nuevoId = productos.value.length ? Math.max(...productos.value.map(p => p.id)) + 1 : 1;
+        productos.value.push({ id: nuevoId, ...nuevoProducto });
+    };
+
+    const eliminarProducto = (id) => {
+        productos.value = productos.value.filter(p => p.id !== id);
+        if (paginacion.paginaActual > totalPaginas.value) {
+            paginacion.paginaActual = totalPaginas.value;
         }
-      })
+    };
 
-      const data = Array.isArray(response.data)
-        ? response.data
-        : Array.isArray(response.data?.data)
-          ? response.data.data
-          : []
+    const cambiarPagina = (nuevaPagina) => {
+        if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas.value) {
+            paginacion.paginaActual = nuevaPagina;
+        }
+    };
 
-      aplicarPaginacion(ordenar(data))
-    } catch (error) {
-      errorGlobal.value = error?.response?.data?.message || 'No se pudo cargar el catálogo.'
-      productos.value = []
-      paginacion.totalRegistros = 0
-      paginacion.totalPaginas = 1
-    } finally {
-      cargando.value = false
-    }
-  }
-
-  const cambiarPagina = async pagina => {
-    paginacion.paginaActual = pagina
-    await obtenerProductos()
-  }
-
-  return {
-    productos,
-    cargando,
-    errorGlobal,
-    filtros,
-    paginacion,
-    obtenerProductos,
-    cambiarPagina
-  }
-})
+    return { 
+        cargando, 
+        paginacion, 
+        filtros, 
+        totalPaginas,
+        productosPaginados,
+        obtenerProductos, 
+        agregarProducto, 
+        eliminarProducto,
+        cambiarPagina
+    };
+});
