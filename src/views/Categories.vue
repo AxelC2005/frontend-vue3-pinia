@@ -1,86 +1,74 @@
 <template>
-  <div class="container">
-    <h1>Categorías</h1>
-    <p class="error" v-if="error">{{ error }}</p>
-    <p class="success" v-if="success">{{ success }}</p>
-
-    <div class="card">
-      <input v-model="form.name" placeholder="Nombre categoría" />
-      <input v-model="form.description" placeholder="Descripción" />
-      <button @click="save">Guardar</button>
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">Gestión de Categorías</h1>
+      <BaseButton @click="modoCrear = !modoCrear">
+        {{ modoCrear ? 'Cancelar' : 'Nueva Categoría' }}
+      </BaseButton>
     </div>
 
-    <table>
-      <thead>
+    <div v-if="modoCrear" class="p-4 mb-6 bg-gray-50 border rounded shadow-sm">
+      <div class="flex gap-4">
+        <input v-model="form.name" type="text" placeholder="Nombre" class="w-1/3 p-2 border rounded" />
+        <input v-model="form.description" type="text" placeholder="Descripción" class="w-1/2 p-2 border rounded" />
+        <BaseButton @click="guardar" :deshabilitado="!form.name">Guardar</BaseButton>
+      </div>
+    </div>
+
+    <BaseLoading :mostrar="categoryStore.cargando" />
+
+    <table v-if="!categoryStore.cargando" class="w-full bg-white rounded shadow-md overflow-hidden">
+      <thead class="bg-gray-800 text-white">
         <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Estado</th>
-          <th>Acciones</th>
+          <th class="p-3 text-left">ID</th>
+          <th class="p-3 text-left">Nombre</th>
+          <th class="p-3 text-left">Descripción</th>
+          <th class="p-3 text-center">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="c in categories" :key="c.id">
-          <td>{{ c.id }}</td>
-          <td>{{ c.name }}</td>
-          <td>{{ c.status }}</td>
-          <td>
-            <button @click="edit(c)">Editar</button>
-            <button @click="remove(c.id)">Eliminar</button>
+        <tr v-for="cat in categoryStore.categorias" :key="cat.id" class="border-b hover:bg-gray-50">
+          <td class="p-3">{{ cat.id }}</td>
+          <td class="p-3 font-semibold">{{ cat.name }}</td>
+          <td class="p-3 text-gray-600">{{ cat.description }}</td>
+          <td class="flex justify-center gap-2 p-3">
+            <BaseButton tipo="peligro" @click="borrar(cat.id)">Eliminar</BaseButton>
           </td>
+        </tr>
+        <tr v-if="categoryStore.categorias.length === 0">
+          <td colspan="4" class="p-4 text-center text-gray-500">No hay categorías registradas.</td>
         </tr>
       </tbody>
     </table>
   </div>
 </template>
 
-<script>
-import axios from 'axios'
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import { useCategoryStore } from '../stores/categories';
 
-export default {
-  data() {
-    return {
-      categories: [],
-      form: { id: null, name: '', description: '', status: 1 },
-      error: '',
-      success: ''
+const categoryStore = useCategoryStore();
+const modoCrear = ref(false);
+
+const form = reactive({
+    name: '',
+    description: ''
+});
+
+onMounted(() => {
+    categoryStore.obtenerCategorias();
+});
+
+const guardar = () => {
+    categoryStore.agregarCategoria({ name: form.name, description: form.description });
+    form.name = '';
+    form.description = '';
+    modoCrear.value = false;
+};
+
+const borrar = (id) => {
+    if (confirm('¿Estás seguro de eliminar esta categoría?')) {
+        categoryStore.eliminarCategoria(id);
     }
-  },
-  mounted() {
-    this.load()
-  },
-  methods: {
-    load() {
-      axios.get((import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api') + '/categories', {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      }).then(res => {
-        this.categories = res.data.categories
-      }).catch(() => this.error = 'Error al cargar categorías')
-    },
-    edit(c) {
-      this.form = c
-    },
-    save() {
-      if (!this.form.name) {
-        this.error = 'Nombre obligatorio'
-        return
-      }
-      const url = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api') + '/categories' + (this.form.id ? '/' + this.form.id : '')
-      const method = this.form.id ? 'put' : 'post'
-      axios({ method, url, data: this.form, headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
-        .then(() => {
-          this.success = 'Guardado'
-          this.form = { id: null, name: '', description: '', status: 1 }
-          this.load()
-        }).catch(err => {
-          this.error = err.response ? JSON.stringify(err.response.data) : 'Error'
-        })
-    },
-    remove(id) {
-      axios.delete((import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api') + '/categories/' + id, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      }).then(() => this.load())
-    }
-  }
-}
+};
 </script>
