@@ -1,11 +1,13 @@
-import Vue from 'vue'
-import App from './App.vue'
-import router from './router'
-import './styles.css'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+import router from './router';
+import "./styles.css";
 
-Vue.config.productionTip = false
+import BaseButton from './components/BaseButton.vue';
 
-new Vue({
-  router,
-  render: h => h(App),
-}).$mount('#app')
+const app = createApp(App);
+app.use(createPinia());
+app.use(router);
+app.component('BaseButton', BaseButton);
+app.mount('#app');
