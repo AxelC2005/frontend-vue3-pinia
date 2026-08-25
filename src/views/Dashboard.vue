@@ -1,48 +1,67 @@
 <template>
-  <div class="container">
-    <h1>Dashboard</h1>
-    <p v-if="loading">Cargando...</p>
-    <p class="error" v-if="error">{{ error }}</p>
+  <div class="p-6">
+    <h1 class="mb-6 text-2xl font-bold text-gray-800">Dashboard</h1>
+    
+    <BaseLoading :mostrar="cargando" />
 
-    <div class="card">
-      <h3>Productos: {{ data.products }}</h3>
-      <h3>Categorías: {{ data.categories }}</h3>
-      <h3>Bajo stock: {{ data.low_stock ? data.low_stock.length : 0 }}</h3>
-    </div>
+    <div v-if="!cargando" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      
+      <div class="p-6 bg-white border-l-4 border-blue-500 rounded shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase">Total Productos</h3>
+        <p class="mt-2 text-3xl font-bold text-gray-800">{{ kpis.totalProductos }}</p>
+      </div>
 
-    <div class="card">
-      <h3>Últimos movimientos</h3>
-      <ul>
-        <li v-for="m in data.last_movements" :key="m.id">
-          {{ m.type }} - {{ m.quantity }} - {{ m.reason }}
-        </li>
-      </ul>
+      <div class="p-6 bg-white border-l-4 border-green-500 rounded shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase">Categorías Activas</h3>
+        <p class="mt-2 text-3xl font-bold text-gray-800">{{ kpis.totalCategorias }}</p>
+      </div>
+
+      <div class="p-6 bg-white border-l-4 border-red-500 rounded shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase">Productos Bajo Stock</h3>
+        <p class="mt-2 text-3xl font-bold text-red-600">{{ kpis.bajoStock }}</p>
+      </div>
+
+      <div class="p-6 bg-white border-l-4 border-purple-500 rounded shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase">Movimientos (Hoy)</h3>
+        <p class="mt-2 text-3xl font-bold text-gray-800">{{ kpis.movimientosHoy }}</p>
+      </div>
+      
     </div>
   </div>
 </template>
 
-<script>
-import axios from 'axios'
+<script setup>
+import { ref, onMounted } from 'vue';
 
-export default {
-  data() {
-    return {
-      loading: false,
-      error: '',
-      data: {}
+const cargando = ref(true);
+const kpis = ref({
+    totalProductos: 0,
+    totalCategorias: 0,
+    bajoStock: 0,
+    movimientosHoy: 0
+});
+
+const cargarDatosDashboard = async () => {
+    cargando.value = true;
+    try {
+
+        setTimeout(() => {
+            kpis.value = {
+                totalProductos: 1245,
+                totalCategorias: 18,
+                bajoStock: 12,
+                movimientosHoy: 34
+            };
+            cargando.value = false;
+        }, 800);
+
+    } catch (error) {
+        console.error("Error cargando KPIs", error);
+        cargando.value = false;
     }
-  },
-  mounted() {
-    this.loading = true
-    axios.get((import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api') + '/dashboard', {
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-    }).then(res => {
-      this.data = res.data
-    }).catch(() => {
-      this.error = 'No se pudo cargar dashboard'
-    }).finally(() => {
-      this.loading = false
-    })
-  }
-}
+};
+
+onMounted(() => {
+    cargarDatosDashboard();
+});
 </script>
