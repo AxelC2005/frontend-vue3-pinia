@@ -1,20 +1,33 @@
-import axios from 'axios'
+import axios from 'axios';
 
-// Legacy issue: API file exists but components still create duplicated axios calls.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
-})
+    baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api',
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+});
 
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = 'Bearer ' + token
-  return config
-})
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
 
-// Legacy issue: global error interceptor does not normalize errors or redirect on 401.
 api.interceptors.response.use(
-  response => response,
-  error => Promise.reject(error)
-)
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth_token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
 
-export default api
+export default api;

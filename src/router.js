@@ -1,23 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router';
-
-const Login = () => import('./views/Login.vue');
-const Dashboard = () => import('./views/Dashboard.vue');
-const Products = () => import('./views/Products.vue');
-const Categories = () => import('./views/Categories.vue');
-const Stock = () => import('./views/StockMovements.vue');
+import Login from './views/Login.vue';
+import Dashboard from './views/Dashboard.vue';
+import Products from './views/Products.vue';
+import Categories from './views/Categories.vue';
+import StockMovements from './views/StockMovements.vue';
 
 const routes = [
-    { path: '/', redirect: '/dashboard' },
-    { 
-        path: '/login', 
-        name: 'Login', 
-        component: Login, 
-        meta: { isPublic: true } 
-    },
-    { path: '/dashboard', name: 'Dashboard', component: Dashboard },
-    { path: '/products', name: 'Products', component: Products },
-    { path: '/categories', name: 'Categories', component: Categories },
-    { path: '/stock', name: 'Stock', component: Stock }
+    { path: '/', redirect: '/login' },
+    { path: '/login', component: Login },
+    { path: '/dashboard', component: Dashboard, meta: { requiereAuth: true } },
+    { path: '/products', component: Products, meta: { requiereAuth: true } },
+    { path: '/categories', component: Categories, meta: { requiereAuth: true } },
+    { path: '/stock-movements', component: StockMovements, meta: { requiereAuth: true } }
 ];
 
 const router = createRouter({
@@ -26,11 +20,11 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('auth_token');
-
-    if (!to.meta.isPublic && !token) {
+    const token = localStorage.getItem('token');
+    
+    if (to.meta.requereAuth && !token) {
         next('/login');
-    } else if (to.meta.isPublic && token) {
+    } else if (to.path === '/login' && token) {
         next('/dashboard');
     } else {
         next();
