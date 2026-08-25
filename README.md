@@ -7,12 +7,11 @@ Aplicación de Single Page Application (SPA) desarrollada para la evaluación t�
 ## 📋 Tabla de Contenido
 1. [Requisitos](#requisitos)
 2. [Instalación](#instalación)
-3. [Variables de entorno](#variables-de-entorno)
-4. [Docker](#docker)
-5. [Migración aplicada](#migración-aplicada)
-6. [Optimización realizada](#optimización-realizada)
-7. [Pruebas](#pruebas)
-8. [Decisiones técnicas](#decisiones-técnicas)
+3. [Docker](#docker)
+4. [Migración aplicada](#migración-aplicada)
+5. [Optimización realizada](#optimización-realizada)
+6. [Pruebas](#pruebas)
+7. [Decisiones técnicas](#decisiones-técnicas)
 
 ---
 
